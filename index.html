@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mechabellum Ladder — Match Log</title>
+
+<!-- ==========================================================================
+     GOOGLE FONTS
+     Orbitron  -> Display/Headline-Schrift (wuchtig, technisch)
+     Rajdhani  -> Fließtext/UI-Schrift (kondensiert, HUD-Charakter)
+     JetBrains Mono -> Zahlen/Timestamps (Datenraster-Optik)
+========================================================================== -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- ==========================================================================
+     TAILWIND CSS (CDN)
+========================================================================== -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          void:      '#080b10',
+          steel:     '#111823',
+          steel2:    '#161f2c',
+          metal:     '#2a3644',
+          metalLight:'#4a5a6d',
+          silver:    '#c7d2dc',
+          cyan:      '#33e1ff',
+          magenta:   '#ff3d7f',
+          amber:     '#ffb84d',
+        },
+        fontFamily: {
+          display: ['Orbitron', 'sans-serif'],
+          body:    ['Rajdhani', 'sans-serif'],
+          mono:    ['JetBrains Mono', 'monospace'],
+        },
+        boxShadow: {
+          'glow-cyan':    '0 0 20px rgba(51,225,255,0.35)',
+          'glow-magenta': '0 0 20px rgba(255,61,127,0.35)',
+        },
+      }
+    }
+  }
+</script>
+
+<!-- ==========================================================================
+     CUSTOM CSS
+     (alles was Tailwind-Utilities nicht direkt abdecken: Clip-Paths,
+     Hex-Grid-Hintergrund, Scanline-Animation, Panel-Kanten)
+========================================================================== -->
+<style>
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: #080b10;
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(51,225,255,0.06), transparent 40%),
+      radial-gradient(circle at 85% 20%, rgba(255,61,127,0.05), transparent 40%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
+    background-attachment: fixed;
+  }
+
+  /* Gepanzertes Karten-Panel: abgeschnittene Ecken wie Mech-Chassis */
+  .panel {
+    clip-path: polygon(0 12px, 12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+    position: relative;
+    background: linear-gradient(160deg, #161f2c 0%, #111823 100%);
+    border: 1px solid #2a3644;
+  }
+
+  /* dünner LED-Strip oben auf jeder Karte */
+  .panel::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 12px; right: 40px;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(51,225,255,0.9), rgba(255,61,127,0.7));
+    opacity: 0.6;
+  }
+
+  /* Scanline-Sweep beim Hover */
+  .panel-scan {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 40%, rgba(51,225,255,0.08) 50%, transparent 60%);
+    background-size: 250% 250%;
+    background-position: 120% 0%;
+    transition: background-position 0.9s ease;
+    pointer-events: none;
+  }
+  .panel:hover .panel-scan { background-position: -20% 0%; }
+
+  /* Chevron-Rotation bei geöffnetem Detail */
+  .chevron { transition: transform 0.25s ease; }
+  .match-row[data-open="true"] .chevron { transform: rotate(180deg); }
+
+  /* Ausklapp-Animation der Detailbox */
+  .details-wrap {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s ease;
+  }
+  .match-row[data-open="true"] .details-wrap { grid-template-rows: 1fr; }
+  .details-inner { overflow: hidden; }
+
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: #080b10; }
+  ::-webkit-scrollbar-thumb { background: #2a3644; border-radius: 4px; }
+
+  .hex-divider {
+    background: repeating-linear-gradient(90deg, #2a3644 0 6px, transparent 6px 12px);
+    height: 1px;
+  }
+</style>
+</head>
+
+<body class="min-h-screen text-silver font-body">
+
+  <!-- ==========================================================================
+       HEADER / HERO
+  ========================================================================== -->
+  <header class="relative border-b border-metal overflow-hidden">
+    <div class="max-w-5xl mx-auto px-6 py-14 relative z-10">
+      <p class="font-mono text-xs tracking-[0.3em] text-cyan/80 mb-3">// LIVE MATCH ARCHIVE</p>
+      <h1 class="font-display font-900 text-4xl md:text-6xl uppercase tracking-tight text-white leading-none">
+        Mechabellum <span class="text-cyan">Ladder</span>
+      </h1>
+      <p class="mt-4 max-w-xl text-metalLight text-lg">
+        Ergebnisse aller 1&nbsp;vs&nbsp;1 Gefechte im Überblick — sortiert nach Turnierphase.
+        Klicke ein Match an, um den Kommentar der Caster einzusehen.
+      </p>
+    </div>
+    <!-- dekorative Glow-Orbs -->
+    <div class="pointer-events-none absolute -top-24 -right-24 w-96 h-96 bg-magenta/10 rounded-full blur-3xl"></div>
+    <div class="pointer-events-none absolute -bottom-32 -left-16 w-96 h-96 bg-cyan/10 rounded-full blur-3xl"></div>
+  </header>
+
+  <!-- ==========================================================================
+       MAIN — wird per JavaScript aus TOURNAMENT_DATA befüllt
+  ========================================================================== -->
+  <main id="tournament-container" class="max-w-5xl mx-auto px-6 py-14 space-y-16"></main>
+
+  <!-- ==========================================================================
+       FOOTER
+  ========================================================================== -->
+  <footer class="border-t border-metal">
+    <div class="max-w-5xl mx-auto px-6 py-8 text-sm text-metalLight font-mono flex flex-col md:flex-row gap-2 justify-between">
+      <span>MECHABELLUM LADDER // v1.0</span>
+      <span>Daten werden direkt im Quellcode gepflegt</span>
+    </div>
+  </footer>
+
+  <!-- ==========================================================================
+       DATEN
+       Hier trägst du neue Turnierphasen / Matches ein.
+       -> "title"    : Überschrift der Phase (z.B. "Vorrunde", "Finale")
+       -> "matches"  : Array einzelner Begegnungen
+            player1 / player2 : Spielernamen
+            score1  / score2  : gewonnene Spiele (Bo-Ergebnis, z.B. 2:1)
+            datetime           : ISO-Format "YYYY-MM-DDTHH:MM"
+            comment            : Freitext-Kommentar (Match-Details)
+  ========================================================================== -->
+  <script>
+    const TOURNAMENT_DATA = [
+      {
+        title: "Vorrunde",
+        matches: [
+          {
+            player1: "Cryotitan", player2: "NullSector",
+            score1: 2, score2: 1,
+            datetime: "2026-08-20T18:30",
+            comment: "Enges Match mit viel Hin und Her. NullSector konnte Spiel 2 durch eine starke Fang-Formation gegen die Melee-Welle von Cryotitan gewinnen, verlor aber Spiel 3 gegen eine überraschende Vulcan-Steel-Ball-Komposition. Cryotitan zeigte sich anpassungsfähig bei der Tech-Wahl."
+          },
+          {
+            player1: "VoidRunner_7", player2: "Skarn.exe",
+            score1: 1, score2: 2,
+            datetime: "2026-08-20T19:15",
+            comment: "Skarn.exe dominierte die Luft früh mit Fortress-Einheiten und zwang VoidRunner_7 zu einem reinen Boden-Setup, das im späten Spiel nicht mehr skalierte. Spiel 1 ging an VoidRunner_7 dank eines starken Early-Rush."
+          },
+          {
+            player1: "Ferrowing", player2: "Blitzcode",
+            score1: 2, score2: 0,
+            datetime: "2026-08-21T18:00",
+            comment: "Klarer Sieg für Ferrowing. Beide Spiele wurden über konsequentes Tech-Scouting entschieden — Blitzcode konnte auf die Konter nicht rechtzeitig reagieren."
+          },
+          {
+            player1: "Omega_Hail", player2: "Rustmarch",
+            score1: 2, score2: 1,
+            datetime: "2026-08-21T18:45",
+            comment: "Rustmarch erzwang mit einer Overlord-Doppel-Comp ein drittes Spiel, scheiterte aber knapp an der Wirtschaft von Omega_Hail. Sehr unterhaltsames Match mit mehreren Lead-Wechseln."
+          }
+        ]
+      },
+      {
+        title: "Halbfinale",
+        matches: [
+          {
+            player1: "Cryotitan", player2: "Skarn.exe",
+            score1: 2, score2: 1,
+            datetime: "2026-08-24T19:00",
+            comment: "Skarn.exe brachte erneut eine starke Luftflotte, doch Cryotitan konterte diesmal gezielt mit Anti-Air-Tech ab Runde 4. Entscheidend war das letzte Spiel, in dem Cryotitan den Wirtschaftsvorteil konsequent in Militärstärke umwandelte."
+          },
+          {
+            player1: "Ferrowing", player2: "Omega_Hail",
+            score1: 2, score2: 1,
+            datetime: "2026-08-24T19:45",
+            comment: "Sehr taktisches Match auf hohem Niveau. Omega_Hail glich nach 0:1-Rückstand aus, verlor das entscheidende Spiel aber durch eine kleine Positionierungsschwäche in der letzten Kampfrunde."
+          }
+        ]
+      },
+      {
+        title: "Finale",
+        matches: [
+          {
+            player1: "Cryotitan", player2: "Ferrowing",
+            score1: 3, score2: 2,
+            datetime: "2026-08-29T20:00",
+            comment: "Das bisher engste Match des Turniers über volle fünf Spiele. Ferrowing führte zwischenzeitlich 2:1, Cryotitan drehte die Serie mit zwei starken Anpassungen in der Tech-Wahl. Ein würdiges Finale, das die Community noch lange beschäftigen wird."
+          }
+        ]
+      }
+    ];
+  </script>
+
+  <!-- ==========================================================================
+       RENDER-LOGIK
+  ========================================================================== -->
+  <script>
+    function formatDateTime(iso) {
+      const d = new Date(iso);
+      const datePart = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const timePart = d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+      return `${datePart} · ${timePart} Uhr`;
+    }
+
+    function renderMatch(match, index, sectionSlug) {
+      const p1Wins = match.score1 > match.score2;
+      const p1Color = p1Wins ? 'text-cyan'    : 'text-metalLight';
+      const p2Color = !p1Wins ? 'text-magenta' : 'text-metalLight';
+      const rowId = `${sectionSlug}-match-${index}`;
+
+      return `
+        <div class="panel match-row mb-4 last:mb-0" data-open="false" id="${rowId}">
+          <div class="panel-scan"></div>
+
+          <button
+            class="w-full text-left px-5 py-4 md:px-8 md:py-5 flex flex-col md:flex-row md:items-center gap-3 md:gap-6 relative z-10"
+            onclick="toggleMatch('${rowId}')"
+          >
+            <!-- Spieler & Score -->
+            <div class="flex-1 flex items-center justify-between md:justify-start md:gap-6">
+              <span class="font-display font-700 text-base md:text-lg ${p1Color} truncate">${match.player1}</span>
+
+              <span class="font-mono text-lg md:text-xl px-3 py-1 rounded-sm bg-void/60 border border-metal text-white tracking-widest shrink-0">
+                ${match.score1}<span class="text-metalLight mx-1">:</span>${match.score2}
+              </span>
+
+              <span class="font-display font-700 text-base md:text-lg ${p2Color} truncate text-right md:text-left">${match.player2}</span>
+            </div>
+
+            <!-- Datum + Chevron -->
+            <div class="flex items-center justify-between md:justify-end gap-4 shrink-0">
+              <span class="font-mono text-xs md:text-sm text-metalLight">${formatDateTime(match.datetime)}</span>
+              <svg class="chevron w-4 h-4 text-cyan" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 7l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </button>
+
+          <div class="details-wrap relative z-10">
+            <div class="details-inner">
+              <div class="px-5 pb-5 md:px-8 md:pb-7 pt-0">
+                <div class="hex-divider mb-4"></div>
+                <p class="font-mono text-[11px] tracking-[0.2em] text-cyan/70 mb-2">MATCH-KOMMENTAR</p>
+                <p class="text-silver/90 leading-relaxed">${match.comment}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSection(section, sIndex) {
+      const slug = section.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const matchesHtml = section.matches
+        .map((m, i) => renderMatch(m, i, slug))
+        .join('');
+
+      return `
+        <section>
+          <div class="flex items-baseline gap-4 mb-6">
+            <span class="font-mono text-cyan text-sm">PHASE ${String(sIndex + 1).padStart(2, '0')}</span>
+            <h2 class="font-display font-800 text-2xl md:text-3xl uppercase text-white tracking-wide">${section.title}</h2>
+            <div class="flex-1 hex-divider"></div>
+          </div>
+          <div>${matchesHtml}</div>
+        </section>
+      `;
+    }
+
+    function toggleMatch(rowId) {
+      const row = document.getElementById(rowId);
+      const isOpen = row.getAttribute('data-open') === 'true';
+      row.setAttribute('data-open', isOpen ? 'false' : 'true');
+    }
+
+    function renderTournament() {
+      const container = document.getElementById('tournament-container');
+      container.innerHTML = TOURNAMENT_DATA.map(renderSection).join('');
+    }
+
+    renderTournament();
+  </script>
+
+</body>
+</html>
