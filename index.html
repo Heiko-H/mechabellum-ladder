@@ -151,7 +151,7 @@
   <footer class="border-t border-metal">
     <div class="max-w-5xl mx-auto px-6 py-8 text-sm text-metalLight font-mono flex flex-col md:flex-row gap-2 justify-between">
       <span>MECHABELLUM LADDER // v1.0</span>
-      <span>Daten werden direkt im Quellcode gepflegt</span>
+      <span><a target="_blank" href="https://store.steampowered.com/app/669330/Mechabellum/">#play-mechabellum</a></span>
     </div>
   </footer>
 
@@ -168,62 +168,78 @@
   <script>
     const TOURNAMENT_DATA = [
       {
-        title: "Vorrunde",
+        title: "Runde 1",
         matches: [
           {
-            player1: "Cryotitan", player2: "NullSector",
-            score1: 2, score2: 1,
-            datetime: "2026-08-20T18:30",
-            comment: "Enges Match mit viel Hin und Her. NullSector konnte Spiel 2 durch eine starke Fang-Formation gegen die Melee-Welle von Cryotitan gewinnen, verlor aber Spiel 3 gegen eine überraschende Vulcan-Steel-Ball-Komposition. Cryotitan zeigte sich anpassungsfähig bei der Tech-Wahl."
+            player1: "CurSe", player2: "Dr.Uffi",
+            score1: 0, score2: 0,
+            datetime: "TBD",
+            comment: ""
           },
           {
-            player1: "VoidRunner_7", player2: "Skarn.exe",
-            score1: 1, score2: 2,
-            datetime: "2026-08-20T19:15",
-            comment: "Skarn.exe dominierte die Luft früh mit Fortress-Einheiten und zwang VoidRunner_7 zu einem reinen Boden-Setup, das im späten Spiel nicht mehr skalierte. Spiel 1 ging an VoidRunner_7 dank eines starken Early-Rush."
+            player1: "PainUser", player2: "ThommyNash",
+            score1: 0, score2: 0,
+            datetime: "TBD",
+            comment: ""
           },
-          {
-            player1: "Ferrowing", player2: "Blitzcode",
-            score1: 2, score2: 0,
-            datetime: "2026-08-21T18:00",
-            comment: "Klarer Sieg für Ferrowing. Beide Spiele wurden über konsequentes Tech-Scouting entschieden — Blitzcode konnte auf die Konter nicht rechtzeitig reagieren."
-          },
-          {
-            player1: "Omega_Hail", player2: "Rustmarch",
-            score1: 2, score2: 1,
-            datetime: "2026-08-21T18:45",
-            comment: "Rustmarch erzwang mit einer Overlord-Doppel-Comp ein drittes Spiel, scheiterte aber knapp an der Wirtschaft von Omega_Hail. Sehr unterhaltsames Match mit mehreren Lead-Wechseln."
-          }
         ]
       },
       {
-        title: "Halbfinale",
+        title: "Runde 2",
         matches: [
           {
-            player1: "Cryotitan", player2: "Skarn.exe",
-            score1: 2, score2: 1,
-            datetime: "2026-08-24T19:00",
-            comment: "Skarn.exe brachte erneut eine starke Luftflotte, doch Cryotitan konterte diesmal gezielt mit Anti-Air-Tech ab Runde 4. Entscheidend war das letzte Spiel, in dem Cryotitan den Wirtschaftsvorteil konsequent in Militärstärke umwandelte."
+            player1: "PainUser", player2: "Dr.Uffi",
+            score1: 0, score2: 0,
+            datetime: "TBD",
+            comment: ""
           },
           {
-            player1: "Ferrowing", player2: "Omega_Hail",
-            score1: 2, score2: 1,
-            datetime: "2026-08-24T19:45",
-            comment: "Sehr taktisches Match auf hohem Niveau. Omega_Hail glich nach 0:1-Rückstand aus, verlor das entscheidende Spiel aber durch eine kleine Positionierungsschwäche in der letzten Kampfrunde."
-          }
+            player1: "CurSe", player2: "ThommyNash",
+            score1: 0, score2: 0,
+            datetime: "TBD",
+            comment: ""
+          },
+        ]
+      },
+      {
+        title: "Runde 3",
+        matches: [
+          {
+            player1: "CurSe", player2: "PainUser",
+            score1: 0, score2: 0,
+            datetime: "TBD",
+            comment: ""
+          },
+          {
+            player1: "Dr.Uffi", player2: "ThommyNash",
+            score1: 0, score2: 0,
+            datetime: "TBD",
+            comment: ""
+          },
+        ]
+      },
+      {
+        title: "Platz 3",
+        matches: [
+          {
+            player1: "TBD", player2: "TBD",
+            score1: 0, score2: 0,
+            datetime: "TDB",
+            comment: ""
+          },
         ]
       },
       {
         title: "Finale",
         matches: [
           {
-            player1: "Cryotitan", player2: "Ferrowing",
-            score1: 3, score2: 2,
-            datetime: "2026-08-29T20:00",
-            comment: "Das bisher engste Match des Turniers über volle fünf Spiele. Ferrowing führte zwischenzeitlich 2:1, Cryotitan drehte die Serie mit zwei starken Anpassungen in der Tech-Wahl. Ein würdiges Finale, das die Community noch lange beschäftigen wird."
-          }
+            player1: "TBD", player2: "TBD",
+            score1: 0, score2: 0,
+            datetime: "TDB",
+            comment: ""
+          },
         ]
-      }
+      },
     ];
   </script>
 
@@ -232,16 +248,19 @@
   ========================================================================== -->
   <script>
     function formatDateTime(iso) {
-      const d = new Date(iso);
-      const datePart = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      const timePart = d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-      return `${datePart} · ${timePart} Uhr`;
+        const d = new Date(iso);
+        if(isNaN(d.getTime()))
+          return "TDB";
+        const datePart = d.toLocaleDateString('de-DE', {day: '2-digit', month: '2-digit', year: 'numeric'});
+        const timePart = d.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'});
+        return `${datePart} · ${timePart} Uhr`;
     }
 
     function renderMatch(match, index, sectionSlug) {
       const p1Wins = match.score1 > match.score2;
+      const p2Wins = match.score1 < match.score2;
       const p1Color = p1Wins ? 'text-cyan'    : 'text-metalLight';
-      const p2Color = !p1Wins ? 'text-magenta' : 'text-metalLight';
+      const p2Color = p2Wins ? 'text-magenta' : 'text-metalLight';
       const rowId = `${sectionSlug}-match-${index}`;
 
       return `
